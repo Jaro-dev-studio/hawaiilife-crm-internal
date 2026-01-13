@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -178,6 +179,34 @@ export interface SidebarProps {
 }
 
 /**
+ * Admin sidebar section
+ */
+const adminSection: SidebarSection = {
+  title: "Admin",
+  items: [
+    {
+      label: "Manage Users",
+      href: "/admin/users",
+      icon: (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      ),
+    },
+  ],
+};
+
+/**
  * Sidebar navigation component for dashboard layouts.
  * CUSTOMIZE: Update navigation items in sidebarSections array.
  */
@@ -189,10 +218,15 @@ export function Sidebar({
   onClose,
 }: SidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
+
+  // Add admin section if user is admin
+  const allSections = isAdmin ? [...sections, adminSection] : sections;
 
   const sidebarContent = (
     <div className="flex-1 overflow-y-auto py-4">
-      {sections.map((section, sectionIndex) => (
+      {allSections.map((section, sectionIndex) => (
         <div key={sectionIndex} className="px-3">
           {section.title && (
             <h3 className="mb-2 mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

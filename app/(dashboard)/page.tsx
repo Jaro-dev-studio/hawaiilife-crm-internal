@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { auth } from "@/lib/auth";
 
 /**
  * CUSTOMIZE: Dashboard statistics data
@@ -74,22 +75,33 @@ const projects = [
  * Dashboard home page - main view for signed-in users.
  * CUSTOMIZE: Update dashboard widgets, stats, and data.
  */
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await auth();
+  const firstName = session?.user?.name?.split(" ")[0] || "there";
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          {/* CUSTOMIZE: Update welcome message */}
-          Welcome back, John. Here&apos;s what&apos;s happening today.
+          Welcome back, {firstName}. Here&apos;s what&apos;s happening today.
         </p>
       </div>
 
+      {/* Impersonation warning */}
+      {session?.user?.isImpersonating && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <p className="text-sm font-medium text-destructive">
+            You are currently impersonating this user. Sign out to return to your admin account.
+          </p>
+        </div>
+      )}
+
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {dashboardStats.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="pb-2">
@@ -98,7 +110,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-xl md:text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 <span
                   className={
@@ -117,14 +129,14 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-7">
         {/* Projects Section */}
         <Card className="lg:col-span-4">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <CardTitle>Projects</CardTitle>
               <CardDescription>
                 Your active projects and their progress.
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               View All
             </Button>
           </CardHeader>
@@ -142,7 +154,7 @@ export default function DashboardPage() {
                         variant={
                           project.status === "active" ? "accent" : "secondary"
                         }
-                        className="text-xs"
+                        className="text-xs shrink-0"
                       >
                         {project.status}
                       </Badge>
@@ -159,7 +171,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex -space-x-2">
+                  <div className="hidden sm:flex -space-x-2">
                     {Array.from({ length: Math.min(project.members, 3) }).map(
                       (_, i) => (
                         <Avatar key={i} size="sm" fallback={`U${i + 1}`} />
@@ -216,9 +228,9 @@ export default function DashboardPage() {
           <CardDescription>Common tasks you can perform.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
             {/* CUSTOMIZE: Update quick action buttons */}
-            <Button variant="outline">
+            <Button variant="outline" className="justify-start sm:justify-center">
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -232,9 +244,9 @@ export default function DashboardPage() {
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              New Project
+              <span className="truncate">New Project</span>
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="justify-start sm:justify-center">
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -248,9 +260,9 @@ export default function DashboardPage() {
                   d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
                 />
               </svg>
-              Invite Member
+              <span className="truncate">Invite</span>
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="justify-start sm:justify-center">
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -264,9 +276,9 @@ export default function DashboardPage() {
                   d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              View Reports
+              <span className="truncate">Reports</span>
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="justify-start sm:justify-center">
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -280,7 +292,7 @@ export default function DashboardPage() {
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                 />
               </svg>
-              Export Data
+              <span className="truncate">Export</span>
             </Button>
           </div>
         </CardContent>

@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * CUSTOMIZE: Notification data
@@ -46,10 +48,21 @@ export interface HeaderProps {
  * CUSTOMIZE: Update logo and user information per client.
  */
 export function Header({ className, onMobileMenuToggle, isMobileMenuOpen }: HeaderProps) {
+  const { data: session } = useSession();
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
 
   const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const user = session?.user;
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
 
   return (
     <header
@@ -112,6 +125,20 @@ export function Header({ className, onMobileMenuToggle, isMobileMenuOpen }: Head
 
         {/* Right side - User menu */}
         <div className="flex items-center gap-2">
+          {/* Impersonation banner */}
+          {user?.isImpersonating && (
+            <Badge variant="destructive" className="hidden sm:inline-flex">
+              Impersonating
+            </Badge>
+          )}
+
+          {/* Admin badge */}
+          {user?.role === "admin" && !user?.isImpersonating && (
+            <Badge variant="secondary" className="hidden sm:inline-flex">
+              Admin
+            </Badge>
+          )}
+
           {/* Notifications */}
           <div className="relative">
             <button
@@ -227,11 +254,14 @@ export function Header({ className, onMobileMenuToggle, isMobileMenuOpen }: Head
               aria-expanded={isUserMenuOpen}
               aria-haspopup="true"
             >
-              {/* CUSTOMIZE: Update with actual user data */}
-              <Avatar fallback="JD" size="sm" />
+              <Avatar 
+                fallback={initials} 
+                size="sm" 
+                src={user?.image || undefined}
+              />
               <div className="hidden text-left md:block">
-                <p className="text-sm font-medium text-foreground">John Doe</p>
-                <p className="text-xs text-muted-foreground">john@example.com</p>
+                <p className="text-sm font-medium text-foreground">{user?.name || "User"}</p>
+                <p className="text-xs text-muted-foreground">{user?.email || ""}</p>
               </div>
               <svg
                 className={cn(
@@ -262,13 +292,49 @@ export function Header({ className, onMobileMenuToggle, isMobileMenuOpen }: Head
                 <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-background py-1 shadow-lg">
                   <div className="border-b border-border px-4 py-3 md:hidden">
                     <p className="text-sm font-medium text-foreground">
-                      John Doe
+                      {user?.name || "User"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      john@example.com
+                      {user?.email || ""}
                     </p>
                   </div>
-                  {/* CUSTOMIZE: Update dropdown menu items */}
+
+                  {/* Mobile-only impersonation indicator */}
+                  {user?.isImpersonating && (
+                    <div className="border-b border-border px-4 py-2 sm:hidden">
+                      <Badge variant="destructive" className="w-full justify-center">
+                        Impersonating User
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Admin links */}
+                  {user?.role === "admin" && !user?.isImpersonating && (
+                    <>
+                      <Link
+                        href="/admin/users"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                          />
+                        </svg>
+                        Manage Users
+                      </Link>
+                      <div className="border-b border-border my-1" />
+                    </>
+                  )}
+
                   <Link
                     href="/settings"
                     className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted"
@@ -299,7 +365,10 @@ export function Header({ className, onMobileMenuToggle, isMobileMenuOpen }: Head
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-muted"
-                      onClick={() => setIsUserMenuOpen(false)}
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        signOut({ callbackUrl: "/auth/signin" });
+                      }}
                     >
                       <svg
                         className="h-4 w-4"
